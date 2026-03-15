@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Browse the full Build Craft Repair catalogue — handcrafted furniture, home décor, and expertly restored antiques. Filter by category and shop on Etsy or Amazon.">
+  <title>Catalogue | Build Craft Repair</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- ======== HEADER ======== -->
+  <header class="site-header">
+    <div class="container">
+      <a href="index.html" class="site-logo" aria-label="Build Craft Repair home">
+        <span class="logo-icon" aria-hidden="true">🪚</span>
+        <span>Build Craft Repair</span>
+      </a>
+
+      <button class="mobile-menu-btn" aria-label="Toggle navigation menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="catalogue.html">Catalogue</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a href="catalogue.html" class="nav-cta">Shop Now</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ======== PAGE HERO ======== -->
+  <section class="page-hero">
+    <div class="container">
+      <h1>Our Catalogue</h1>
+      <p>Handcrafted goods, home décor, and restored antiques — each piece made with care.</p>
+    </div>
+  </section>
+
+  <!-- ======== CATALOGUE ======== -->
+  <section class="section-pad">
+    <div class="container">
+
+      <!-- Controls -->
+      <div class="catalogue-controls" role="search">
+        <div class="search-box">
+          <label for="catalogue-search" class="sr-only">Search products</label>
+          <input
+            type="search"
+            id="catalogue-search"
+            placeholder="Search items…"
+            autocomplete="off"
+            aria-label="Search products"
+          >
+          <span class="search-icon" aria-hidden="true">🔍</span>
+        </div>
+
+        <div class="filter-group" role="group" aria-label="Filter by category">
+          <span class="filter-label">Category:</span>
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="furniture">Furniture</button>
+          <button class="filter-btn" data-filter="decor">Décor &amp; Gifts</button>
+          <button class="filter-btn" data-filter="restored">Restored</button>
+          <button class="filter-btn" data-filter="workshop">Workshop</button>
+        </div>
+
+        <div class="filter-group">
+          <label for="catalogue-sort" class="filter-label">Sort:</label>
+          <select id="catalogue-sort" class="filter-sort" aria-label="Sort products">
+            <option value="default">Featured</option>
+            <option value="name">Name A–Z</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Result count -->
+      <p class="catalogue-results-info" id="catalogue-count" aria-live="polite"></p>
+
+      <!-- Product grid -->
+      <div class="products-grid" id="catalogue-grid" aria-label="Product catalogue">
+        <!-- Populated by catalogue.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== SHOPPING PLATFORMS ======== -->
+  <section class="section-pad bg-cream-dark">
+    <div class="container">
+      <h2 class="section-title">Also Available On</h2>
+      <p class="section-subtitle">Shop our items through your preferred marketplace.</p>
+
+      <div class="platforms-grid">
+        <a href="https://www.etsy.com/shop/BuildCraftRepair" target="_blank" rel="noopener noreferrer" class="platform-card">
+          <span class="platform-icon" aria-hidden="true">🛍️</span>
+          <h3>Etsy</h3>
+          <p>Secure checkout with buyer protection on all handmade items.</p>
+        </a>
+        <a href="https://www.amazon.com/handmade" target="_blank" rel="noopener noreferrer" class="platform-card">
+          <span class="platform-icon" aria-hidden="true">📦</span>
+          <h3>Amazon Handmade</h3>
+          <p>Fast shipping and easy returns through Amazon's platform.</p>
+        </a>
+        <a href="contact.html" class="platform-card">
+          <span class="platform-icon" aria-hidden="true">✉️</span>
+          <h3>Custom Orders</h3>
+          <p>Don't see what you're looking for? We love custom commissions.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== FOOTER ======== -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="site-logo">
+            <span class="logo-icon" aria-hidden="true">🪚</span>
+            <span>Build Craft Repair</span>
+          </a>
+          <p>Handcrafted furniture, home décor, and lovingly restored antiques — built to last.</p>
+          <div class="social-links">
+            <a href="https://www.youtube.com/@BuildCraftRepair" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="YouTube">▶</a>
+            <a href="https://www.etsy.com/shop/BuildCraftRepair" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Etsy">🛍</a>
+            <a href="https://www.instagram.com/buildcraftrepair" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Instagram">📷</a>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4>Shop</h4>
+          <ul>
+            <li><a href="catalogue.html">All Items</a></li>
+            <li><a href="catalogue.html">Furniture</a></li>
+            <li><a href="catalogue.html">Home Décor</a></li>
+            <li><a href="catalogue.html">Restored Pieces</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="https://www.youtube.com/@BuildCraftRepair" target="_blank" rel="noopener noreferrer">YouTube Channel</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Buy Online</h4>
+          <ul>
+            <li><a href="https://www.etsy.com/shop/BuildCraftRepair" target="_blank" rel="noopener noreferrer">Etsy Shop</a></li>
+            <li><a href="https://www.amazon.com/handmade" target="_blank" rel="noopener noreferrer">Amazon Handmade</a></li>
+            <li><a href="contact.html">Custom Orders</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; <span id="footer-year"></span> Build Craft Repair. All rights reserved.</p>
+        <p>Built with care &mdash; just like our furniture.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
+  <script src="js/main.js"></script>
+  <script src="js/catalogue.js"></script>
+
+</body>
+</html>
