@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CSV Line Overlay Map</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <style>
+    :root {
+      --bg: #f4f8fb;
+      --panel: #ffffff;
+      --ink: #1c2a35;
+      --muted: #597082;
+      --accent: #0b7fab;
+      --accent-2: #19a974;
+      --border: #d5e2ec;
+      --warning: #8a4b00;
+      --warning-bg: #fff4e6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 10%, #dff3ff 0%, transparent 30%),
+        radial-gradient(circle at 85% 80%, #e8fff3 0%, transparent 28%),
+        var(--bg);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) 1fr;
+      height: 100%;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 8px 28px rgba(25, 56, 78, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.15rem;
+      letter-spacing: 0.2px;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.35;
+    }
+
+    label {
+      font-size: 0.84rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 280px;
+      resize: vertical;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.84rem;
+      line-height: 1.35;
+      color: var(--ink);
+      background: #fcfeff;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .controls .wide {
+      grid-column: 1 / -1;
+    }
+
+    select,
+    input,
+    button {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      background: linear-gradient(120deg, var(--accent), var(--accent-2));
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      transition: transform 0.06s ease, filter 0.2s ease;
+    }
+
+    button:hover {
+      filter: brightness(1.04);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    #status {
+      border: 1px solid #c8ead9;
+      background: #edf9f2;
+      color: #1d6d44;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      min-height: 36px;
+    }
+
+    #status.warn {
+      border-color: #ffd8ad;
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 8px 28px rgba(25, 56, 78, 0.08);
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto minmax(340px, 1fr);
+      }
+
+      textarea {
+        min-height: 220px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <section class="panel">
+      <h1>CSV Line Overlay</h1>
+      <p>
+        Paste CSV below. Supports segment columns (start_lat, start_lng, end_lat, end_lng)
+        or point columns (lat, lng, optional line_id). Color column is optional.
+      </p>
+
+      <textarea id="csvInput" spellcheck="false">
+start_lat,start_lng,end_lat,end_lng,color
+"44°48'17.9\"N","84°14'54.5\"W","44°48'17.9\"N","84°14'49.9\"W",red
+"44°48'17.9\"N","84°14'49.9\"W","44°48'16.2\"N","84°14'49.9\"W",red
+"44°48'16.2\"N","84°14'49.9\"W","44°48'16.2\"N","84°14'54.5\"W",red
+"44°48'16.2\"N","84°14'54.5\"W","44°48'17.9\"N","84°14'54.5\"W",red
+"44°48'16.2\"N","84°14'54.5\"W","44°48'16.2\"N","84°14'49.9\"W",purple
+"44°48'16.2\"N","84°14'49.9\"W","44°48'14.5\"N","84°14'49.9\"W",purple
+"44°48'14.5\"N","84°14'49.9\"W","44°48'14.5\"N","84°14'54.5\"W",purple
+"44°48'14.5\"N","84°14'54.5\"W","44°48'16.2\"N","84°14'54.5\"W",purple
+"44°48'9\"N","84°14'54.5\"W","44°48'9\"N","84°14'49.9\"W",blue
+"44°48'9\"N","84°14'49.9\"W","44°48'7.3\"N","84°14'49.9\"W",blue
+"44°48'7.3\"N","84°14'49.9\"W","44°48'7.3\"N","84°14'54.5\"W",blue
+"44°48'7.3\"N","84°14'54.5\"W","44°48'9\"N","84°14'54.5\"W",blue
+"44°48'14.5\"N","84°14'54.5\"W","44°48'14.5\"N","84°14'49.9\"W",green
+"44°48'14.5\"N","84°14'49.9\"W","44°48'9\"N","84°14'49.9\"W",green
+"44°48'9\"N","84°14'49.9\"W","44°48'9\"N","84°14'54.5\"W",green
+"44°48'9\"N","84°14'54.5\"W","44°48'14.5\"N","84°14'54.5\"W",green
+"44°48'4.7\"N","84°14'54.5\"W","44°48'4.7\"N","84°14'49.9\"W",grey
+"44°48'4.7\"N","84°14'49.9\"W","44°48'7.3\"N","84°14'49.9\"W",grey
+"44°48'7.3\"N","84°14'49.9\"W","44°48'7.3\"N","84°14'54.5\"W",grey
+"44°48'7.3\"N","84°14'54.5\"W","44°48'4.7\"N","84°14'54.5\"W",grey
+"44°48'13.5\"N","84°14'51.1\"W","44°48'13.5\"N","84°14'50.9\"W",white
+"44°48'13.5\"N","84°14'50.9\"W","44°48'13.1\"N","84°14'50.9\"W",white
+"44°48'13.1\"N","84°14'50.9\"W","44°48'13.1\"N","84°14'51.1\"W",white
+"44°48'13.1\"N","84°14'51.1\"W","44°48'13.5\"N","84°14'51.1\"W",white
+</textarea>
+
+      <div class="controls">
+        <div>
+          <label for="layerSelect">Map Layer</label>
+          <select id="layerSelect">
+            <option value="streets">Streets (OpenStreetMap)</option>
+            <option value="satellite" selected>Satellite (Esri)</option>
+            <option value="topo">Topographic (OpenTopoMap)</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="defaultColor">Default Color</label>
+          <input id="defaultColor" type="text" value="#ff0000" />
+        </div>
+
+        <div>
+          <label for="weightInput">Line Width</label>
+          <input id="weightInput" type="number" min="1" max="30" value="4" />
+        </div>
+
+        <div>
+          <label for="opacityInput">Line Opacity</label>
+          <input id="opacityInput" type="number" min="0" max="1" step="0.05" value="0.9" />
+        </div>
+
+        <div class="wide">
+          <button id="renderBtn" type="button">Render Lines</button>
+        </div>
+      </div>
+
+      <div id="status">Ready.</div>
+    </section>
+
+    <section id="map"></section>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script>
+    const ALIASES = {
+      start_lat: ["start_lat", "from_lat", "lat1", "startlatitude", "fromlatitude"],
+      start_lng: ["start_lng", "start_lon", "from_lng", "from_lon", "lng1", "lon1", "startlongitude", "fromlongitude"],
+      end_lat: ["end_lat", "to_lat", "lat2", "endlatitude", "tolatitude"],
+      end_lng: ["end_lng", "end_lon", "to_lng", "to_lon", "lng2", "lon2", "endlongitude", "tolongitude"],
+      lat: ["lat", "latitude", "y"],
+      lng: ["lng", "lon", "long", "longitude", "x"],
+      group: ["line_id", "group", "path", "path_id", "route", "route_id", "track", "track_id"],
+      color: ["color", "stroke", "line_color", "strokecolor"]
+    };
+
+    const layers = {
+      streets: L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors"
+      }),
+      satellite: L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 19,
+        attribution: "Tiles &copy; Esri"
+      }),
+      topo: L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+        maxZoom: 17,
+        attribution: "Map data: &copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap"
+      })
+    };
+
+    const map = L.map("map", {
+      center: [44.8049, -84.2479],
+      zoom: 16,
+      layers: [layers.satellite]
+    });
+
+    L.control.layers(
+      {
+        "Streets": layers.streets,
+        "Satellite": layers.satellite,
+        "Topographic": layers.topo
+      },
+      {},
+      { collapsed: false }
+    ).addTo(map);
+
+    let activeLayer = layers.satellite;
+    let rendered = [];
+
+    const csvInput = document.getElementById("csvInput");
+    const layerSelect = document.getElementById("layerSelect");
+    const defaultColorInput = document.getElementById("defaultColor");
+    const weightInput = document.getElementById("weightInput");
+    const opacityInput = document.getElementById("opacityInput");
+    const renderBtn = document.getElementById("renderBtn");
+    const statusEl = document.getElementById("status");
+
+    function normalizeCol(name) {
+      return String(name || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+    }
+
+    function findCol(headers, aliases) {
+      const set = new Set(aliases.map(normalizeCol));
+      for (const h of headers) {
+        if (set.has(normalizeCol(h))) {
+          return h;
+        }
+      }
+      return null;
+    }
+
+    function parseCsvLine(line) {
+      const out = [];
+      let cur = "";
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i += 1) {
+        const ch = line[i];
+
+        if (ch === '"') {
+          const next = line[i + 1];
+          if (inQuotes && next === '"') {
+            cur += '"';
+            i += 1;
+          } else {
+            inQuotes = !inQuotes;
+          }
+          continue;
+        }
+
+        if (ch === "," && !inQuotes) {
+          out.push(cur);
+          cur = "";
+        } else {
+          cur += ch;
+        }
+      }
+
+      out.push(cur);
+      return out;
+    }
+
+    function parseCsv(text) {
+      const lines = text
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+
+      if (lines.length < 2) {
+        throw new Error("CSV needs a header and at least one data row.");
+      }
+
+      const headers = parseCsvLine(lines[0]);
+      const rows = [];
+
+      for (let i = 1; i < lines.length; i += 1) {
+        // Accept C-style escaped quotes (\") by converting them to CSV escaped quotes ("").
+        const normalizedLine = lines[i].replace(/\\"/g, '""');
+        const values = parseCsvLine(normalizedLine);
+        const row = {};
+        for (let c = 0; c < headers.length; c += 1) {
+          row[headers[c]] = (values[c] || "").trim();
+        }
+        rows.push(row);
+      }
+
+      return { headers, rows };
+    }
+
+    function parseCoordinate(raw, axis) {
+      const text = String(raw || "").trim().toUpperCase();
+      if (!text) {
+        throw new Error("Coordinate is empty");
+      }
+
+      let directionSign = null;
+      if (/[SW]/.test(text)) {
+        directionSign = -1;
+      } else if (/[NE]/.test(text)) {
+        directionSign = 1;
+      }
+
+      let cleaned = text
+        .replace(/º/g, "°")
+        .replace(/[′’]/g, "'")
+        .replace(/″/g, '"')
+        .replace(/[NSEW]/g, " ")
+        .replace(/[°'"]/g, " ")
+        .replace(/,/g, " ");
+
+      const nums = cleaned.match(/[-+]?\d+(?:\.\d+)?/g);
+      if (!nums || nums.length === 0) {
+        throw new Error(`Could not parse coordinate: ${raw}`);
+      }
+
+      let signFromValue = 1;
+      let magnitude = 0;
+
+      if (nums.length === 1) {
+        const value = Number(nums[0]);
+        signFromValue = value < 0 ? -1 : 1;
+        magnitude = Math.abs(value);
+      } else {
+        const deg = Number(nums[0]);
+        const min = nums[1] ? Number(nums[1]) : 0;
+        const sec = nums[2] ? Number(nums[2]) : 0;
+
+        if (min >= 60 || sec >= 60) {
+          throw new Error(`Invalid DMS value: ${raw}`);
+        }
+
+        signFromValue = deg < 0 ? -1 : 1;
+        magnitude = Math.abs(deg) + min / 60 + sec / 3600;
+      }
+
+      const sign = directionSign !== null ? directionSign : signFromValue;
+      const value = sign * magnitude;
+
+      if (axis === "lat" && (value < -90 || value > 90)) {
+        throw new Error(`Latitude out of range: ${raw}`);
+      }
+      if (axis === "lng" && (value < -180 || value > 180)) {
+        throw new Error(`Longitude out of range: ${raw}`);
+      }
+
+      return value;
+    }
+
+    function parseLines(text) {
+      const { headers, rows } = parseCsv(text);
+
+      const startLat = findCol(headers, ALIASES.start_lat);
+      const startLng = findCol(headers, ALIASES.start_lng);
+      const endLat = findCol(headers, ALIASES.end_lat);
+      const endLng = findCol(headers, ALIASES.end_lng);
+      const colorCol = findCol(headers, ALIASES.color);
+
+      if (startLat && startLng && endLat && endLng) {
+        return rows.map((row, idx) => {
+          try {
+            return {
+              color: row[colorCol] || null,
+              path: [
+                [parseCoordinate(row[startLat], "lat"), parseCoordinate(row[startLng], "lng")],
+                [parseCoordinate(row[endLat], "lat"), parseCoordinate(row[endLng], "lng")]
+              ]
+            };
+          } catch (err) {
+            throw new Error(`Row ${idx + 2}: ${err.message}`);
+          }
+        });
+      }
+
+      const latCol = findCol(headers, ALIASES.lat);
+      const lngCol = findCol(headers, ALIASES.lng);
+      const groupCol = findCol(headers, ALIASES.group);
+
+      if (!latCol || !lngCol) {
+        throw new Error("Need either segment columns (start_lat/start_lng/end_lat/end_lng) or point columns (lat/lng).");
+      }
+
+      const groups = new Map();
+      rows.forEach((row, idx) => {
+        try {
+          const p = [parseCoordinate(row[latCol], "lat"), parseCoordinate(row[lngCol], "lng")];
+          const key = groupCol ? (row[groupCol] || "default") : "default";
+          if (!groups.has(key)) {
+            groups.set(key, { color: colorCol ? (row[colorCol] || null) : null, path: [] });
+          }
+          groups.get(key).path.push(p);
+        } catch (err) {
+          throw new Error(`Row ${idx + 2}: ${err.message}`);
+        }
+      });
+
+      return [...groups.values()].filter((line) => line.path.length >= 2);
+    }
+
+    function clearRendered() {
+      rendered.forEach((layer) => map.removeLayer(layer));
+      rendered = [];
+    }
+
+    function setStatus(message, warn = false) {
+      statusEl.textContent = message;
+      statusEl.classList.toggle("warn", warn);
+    }
+
+    function applySelectedBasemap() {
+      const selected = layerSelect.value;
+      const nextLayer = layers[selected] || layers.streets;
+      if (activeLayer === nextLayer) {
+        return;
+      }
+      map.removeLayer(activeLayer);
+      map.addLayer(nextLayer);
+      activeLayer = nextLayer;
+    }
+
+    function renderCsv() {
+      try {
+        applySelectedBasemap();
+        clearRendered();
+
+        const lines = parseLines(csvInput.value);
+        if (lines.length === 0) {
+          throw new Error("No valid line segments found.");
+        }
+
+        const defaultColor = defaultColorInput.value.trim() || "#ff0000";
+        const weight = Math.max(1, Number(weightInput.value) || 4);
+        const opacity = Math.min(1, Math.max(0, Number(opacityInput.value) || 0.9));
+
+        const bounds = [];
+        let pointCount = 0;
+
+        lines.forEach((line) => {
+          const strokeColor = (line.color || "").trim() || defaultColor;
+          const polyline = L.polyline(line.path, {
+            color: strokeColor,
+            weight,
+            opacity
+          }).addTo(map);
+
+          rendered.push(polyline);
+          line.path.forEach((p) => bounds.push(p));
+          pointCount += line.path.length;
+        });
+
+        if (bounds.length > 1) {
+          map.fitBounds(bounds, { padding: [24, 24] });
+        }
+
+        setStatus(`Rendered ${lines.length} line(s), ${pointCount} point(s).`);
+      } catch (err) {
+        setStatus(err.message || String(err), true);
+      }
+    }
+
+    layerSelect.addEventListener("change", applySelectedBasemap);
+    renderBtn.addEventListener("click", renderCsv);
+
+    renderCsv();
+  </script>
+</body>
+</html>
